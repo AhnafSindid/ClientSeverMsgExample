@@ -1,7 +1,5 @@
 package org.example.clientsevermsgexample;
 
-
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -38,12 +36,18 @@ public class MainController implements Initializable {
                 "119",     // nntp (news)
                 "161"      // snmp);
         );
+        user1_client.setOnAction(this::startClient);
+        user2_server.setOnAction(this::startServer);
     }
 
     @FXML
     private Button clearBtn;
 
+    @FXML
+    private Button user1_client;
 
+    @FXML
+    private Button user2_server;
 
     @FXML
     private TextArea resultArea;
@@ -86,7 +90,6 @@ public class MainController implements Initializable {
 
     }
 
-
     @FXML
     void clearBtn(ActionEvent event) {
         resultArea.setText("");
@@ -95,139 +98,40 @@ public class MainController implements Initializable {
     }
 
 
-
     @FXML
     void startServer(ActionEvent event) {
         Stage stage = new Stage();
-        Group root = new Group();
-        Label lb11 = new Label("Server");
-        lb11.setLayoutX(100);
-        lb11.setLayoutY(100);
-
-        lb12 = new Label("info");
-        lb12.setLayoutX(100);
-        lb12.setLayoutY(200);
-        root.getChildren().addAll(lb11, lb12);
-        Scene scene = new Scene(root, 600, 350);
-        stage.setScene(scene);
-        lb12.setText("Server is running and waiting for a client...");
-
-        stage.setTitle("Server");
-        stage.show();
-
-
-        new Thread(this::runServer).start();
-
-    }
-
-    String message;
-
-    private void runServer() {
-        try {
-
-            ServerSocket serverSocket = new ServerSocket(6666);
-            updateServer("Server is running and waiting for a client...");
-            while (true) { // Infinite loop
-                try {
-                    Socket clientSocket = serverSocket.accept();
-                    updateServer("Client connected!");
-
-                    new Thread(() -> {
-                        try {
-                            sleep(3000);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                    DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
-                    DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
-
-                    message = dis.readUTF();
-                    updateServer("Message from client: " + message);
-
-                    // Sending a response back to the client
-                    dos.writeUTF("Received: " + message);
-
-                    dis.close();
-                    dos.close();
-
-                } catch (IOException e) {
-                    updateServer("Error: " + e.getMessage());
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                if (message.equalsIgnoreCase("exit")) break;
-
-            }
+        try{
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("server-view.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            stage.setTitle("Server");
+            stage.setScene(scene);
+            stage.show();
+            resultArea.appendText("Server started\n");
         } catch (IOException e) {
-            updateServer("Error: " + e.getMessage());
+            resultArea.appendText("Error starting Server: " + e.getMessage() + "\n");
+            e.printStackTrace();
         }
-    }
 
-    private void updateServer(String message) {
-        // Run on the UI thread
-        javafx.application.Platform.runLater(() -> lb12.setText(message + "\n"));
     }
-
 
     @FXML
     void startClient(ActionEvent event) {
         Stage stage = new Stage();
-        Group root = new Group();
-        Button connectButton = new Button("Connect to server");
-        connectButton.setLayoutX(100);
-        connectButton.setLayoutY(300);
-        connectButton.setOnAction(this::connectToServer);
-        // new Thread(this::connectToServer).start();
-
-        Label lb11 = new Label("Client");
-        lb11.setLayoutX(100);
-        lb11.setLayoutY(100);
-        msgText = new TextField("msg");
-        msgText.setLayoutX(100);
-        msgText.setLayoutY(150);
-
-        lb122 = new Label("info");
-        lb122.setLayoutX(100);
-        lb122.setLayoutY(200);
-        root.getChildren().addAll(lb11, lb122, connectButton, msgText);
-
-
-        Scene scene = new Scene(root, 600, 350);
-        stage.setScene(scene);
-        stage.setTitle("Client");
-        stage.show();
-
-
-    }
-
-
-    private void connectToServer(ActionEvent event) {
-
-
-        try {
-            socket1 = new Socket("localhost", 6666);
-
-            DataOutputStream dos = new DataOutputStream(socket1.getOutputStream());
-            DataInputStream dis = new DataInputStream(socket1.getInputStream());
-
-            dos.writeUTF(msgText.getText());
-            String response = dis.readUTF();
-            updateTextClient("Server response: " + response + "\n");
-
-            dis.close();
-            dos.close();
-            socket1.close();
-        } catch (Exception e) {
-            updateTextClient("Error: " + e.getMessage() + "\n");
+        try{
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("client-view.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.setTitle("Client");
+            stage.show();
+            resultArea.appendText("Client started\n");
+        }catch (IOException e){
+            resultArea.appendText("Error starting Client: " + e.getMessage() + "\n");
+            e.printStackTrace();
         }
 
-
-    }
-
-    private void updateTextClient(String message) {
-        // Run on the UI thread
-        javafx.application.Platform.runLater(() -> lb122.setText(message + "\n"));
     }
 
 }
